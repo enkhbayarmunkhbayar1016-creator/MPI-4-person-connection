@@ -38,7 +38,7 @@ body::before {
   position: fixed;
   inset: 0;
   background: url('/muur2.jpg') center/50% auto repeat;
-  opacity: 0.28;
+  opacity: 0.1;
   z-index: 0;
   pointer-events: none;
 }
@@ -353,6 +353,20 @@ body::before {
   text-align: center;
   align-self: center;
 }
+.msg-bubble.gif-msg {
+  background: none;
+  border: none;
+  padding: 0;
+  align-self: center;
+  width: 100%;
+}
+.msg-bubble.gif-msg iframe {
+  width: 100%;
+  height: 160px;
+  border-radius: 10px;
+  border: none;
+  display: block;
+}
 
 .msg-input-row {
   display: flex;
@@ -387,6 +401,21 @@ body::before {
 }
 .send-btn:disabled { opacity: 0.3; cursor: default; }
 .send-btn:hover:not(:disabled) { opacity: 0.8; }
+
+.client-mascot {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 8px;
+  border-top: 1px solid var(--card-border);
+}
+.client-mascot img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  opacity: 0.75;
+  border: 1.5px solid rgba(255,255,255,0.15);
+}
 
 /* ─── Log ────────────────────────────────────────────────────── */
 .log-section {

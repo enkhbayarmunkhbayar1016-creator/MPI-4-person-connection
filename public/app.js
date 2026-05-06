@@ -95,6 +95,23 @@ function toggleServer(srv) {
   }
 }
 
+/* ─── Client GIFs (shown on connect) ─────────────────────────── */
+const clientGifs = {
+  1: 'https://tenor.com/embed/1936',
+  2: 'https://tenor.com/embed/73359',
+  3: 'https://tenor.com/embed/114809',
+  4: 'https://tenor.com/embed/221617'
+};
+
+function addGifMsg(clientId) {
+  const chat = document.getElementById('chat-' + clientId);
+  const div = document.createElement('div');
+  div.className = 'msg-bubble gif-msg';
+  div.innerHTML = `<iframe src="${clientGifs[clientId]}" frameborder="0" allowfullscreen></iframe>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
 /* ─── Client connect / disconnect ─────────────────────────────── */
 function toggleClient(id) {
   if (sockets[id]) {
@@ -114,6 +131,7 @@ function connectClient(id) {
   sock.on('connect', () => {
     setClientStatus(id, 'online');
     addSysMsg(id, `Connected to ${ns === '/server-a' ? 'Server A' : 'Server B'}`);
+    addGifMsg(id);
     enableInput(id, true);
     document.getElementById('panel-' + id).classList.add('connected');
     const btn = document.getElementById('conn-btn-' + id);
