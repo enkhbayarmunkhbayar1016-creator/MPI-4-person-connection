@@ -66,10 +66,8 @@ nsA.on('connection', (socket) => {
     messages.push(msg);
     if (messages.length > 100) messages.shift();
 
-    // Relay to Server B clients
     nsB.emit('message', msg);
     nsA.emit('message', msg);
-    adminNs.emit('message', msg);
 
     broadcast('system-log', {
       text: `Client ${clientId} → Server A → Server B → All clients`,
@@ -126,7 +124,6 @@ nsB.on('connection', (socket) => {
 
     nsA.emit('message', msg);
     nsB.emit('message', msg);
-    adminNs.emit('message', msg);
 
     broadcast('system-log', {
       text: `Client ${clientId} → Server B → Server A → All clients`,

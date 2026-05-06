@@ -33,12 +33,22 @@ body {
   overflow-x: hidden;
 }
 
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url('/muur.jpg') center/cover no-repeat;
+  opacity: 0.08;
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* ─── Particles ──────────────────────────────────────────────── */
 .particles {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
   overflow: hidden;
 }
 .particle {
@@ -57,7 +67,7 @@ body {
 /* ─── App Layout ─────────────────────────────────────────────── */
 .app {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 16px 40px;

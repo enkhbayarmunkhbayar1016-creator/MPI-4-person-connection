@@ -38,12 +38,6 @@ const adminSocket = io(BASE + '/admin');
 
 adminSocket.on('stats', updateStats);
 adminSocket.on('system-log', appendLog);
-adminSocket.on('message', (msg) => {
-  // Deliver to all connected clients
-  [1, 2, 3, 4].forEach(id => {
-    if (sockets[id]) receiveMsg(id, msg);
-  });
-});
 
 function updateStats(stats) {
   // Server A
