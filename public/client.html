@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client — Lab4</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body class="client-body">
+
+<div class="particles" id="particles"></div>
+
+<!-- Join overlay (shown until registered) -->
+<div class="join-overlay" id="join-overlay">
+  <div class="join-card">
+    <div id="join-badge" class="client-badge c1">C?</div>
+    <div id="join-title" class="join-title">Client ?</div>
+    <div id="join-sub"   class="join-sub">Server ?</div>
+    <div class="join-form">
+      <input id="join-name" class="join-input" placeholder="Нэрээ оруулна уу..." autocomplete="nickname" />
+      <select id="join-server" class="join-input join-select" onchange="onServerChange(this.value)">
+        <option value="A">Server A · :3001</option>
+        <option value="B">Server B · :3002</option>
+      </select>
+      <input id="join-code" class="join-input" placeholder="Room code (XXXX)"
+             maxlength="6" autocomplete="off" style="display:none"
+             style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-size:20px;font-weight:800" />
+      <div id="join-error" class="form-error"></div>
+      <button id="join-btn" class="login-submit">Нэвтрэх →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chat UI (flex column, full height) -->
+<div class="client-main" id="client-main">
+  <div class="client-topbar">
+    <div id="client-badge" class="client-badge c1">C?</div>
+    <div class="client-info">
+      <div id="client-title" class="client-title">Client ?</div>
+      <div id="srv-label"    class="client-server">→ Server ?</div>
+    </div>
+    <span id="username-tag" class="client-username-tag"></span>
+    <select id="topbar-server" class="topbar-server-select" onchange="switchServer(this.value)">
+      <option value="A">Server A · :3001</option>
+      <option value="B">Server B · :3002</option>
+    </select>
+    <div class="client-status" id="status">
+      <span class="dot offline"></span>
+      <span class="status-text">Disconnected</span>
+    </div>
+    <button id="conn-btn" class="connect-btn">Connect</button>
+  </div>
+  <div class="chat-box client-chat" id="chat"></div>
+  <div class="msg-input-row">
+    <input class="msg-input" id="input" placeholder="Мессеж бичнэ үү..." disabled />
+    <button class="send-btn" id="send-btn" disabled>&#9658;</button>
+  </div>
+</div>
+
+<script src="client.js"></script>
+</body>
+</html>

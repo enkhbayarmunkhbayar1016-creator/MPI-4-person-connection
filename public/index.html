@@ -3,18 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lab4 — Distributed System</title>
+  <title>Lab4 — Admin Dashboard</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<!-- Background particles -->
 <div class="particles" id="particles"></div>
 
-<div class="app">
-  <!-- Header -->
+<!-- Auth overlay (Login / Register) -->
+<div class="admin-login-overlay" id="admin-login-overlay">
+  <div class="login-card">
+    <div class="login-icon">⬡</div>
+    <div class="login-title">F.CSM306</div>
+    <div class="login-sub">Лаборатори Ажил №4</div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Нэвтрэх</button>
+      <button class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">Бүртгүүлэх</button>
+    </div>
+
+    <!-- Login form -->
+    <div class="login-form" id="form-login">
+      <select id="login-role" class="login-input login-select" onchange="onLoginRoleChange(this.value)">
+        <option value="admin">Admin</option>
+        <option value="client">Хэрэглэгч (Client)</option>
+      </select>
+      <input id="login-user" class="login-input" placeholder="Нэвтрэх нэр..." autocomplete="username" />
+      <input id="login-pass" class="login-input" type="password" placeholder="Нууц үг..." autocomplete="current-password" />
+      <div id="login-error" class="form-error"></div>
+      <button id="login-btn" class="login-submit">Нэвтрэх →</button>
+    </div>
+
+    <!-- Register form -->
+    <div class="login-form" id="form-register" style="display:none">
+      <input id="reg-user" class="login-input" placeholder="Нэр / Username..." autocomplete="username" />
+      <input id="reg-pass" class="login-input" type="password" placeholder="Нууц үг..." id="reg-pass" />
+      <select id="reg-role" class="login-input login-select" onchange="onRoleChange(this.value)">
+        <option value="admin">Admin хэрэглэгч</option>
+        <option value="client">Client хэрэглэгч</option>
+      </select>
+      <div id="reg-error" class="form-error"></div>
+      <button id="reg-btn" class="login-submit">Бүртгүүлэх →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard (shown after login) -->
+<div class="app" id="dashboard" style="display:none">
   <header class="header">
     <div class="header-left">
       <div class="logo">
@@ -26,10 +64,12 @@
       </div>
     </div>
     <div class="header-center">
-      <h1 class="main-title">Distributed System</h1>
+      <h1 class="main-title">Admin Dashboard</h1>
       <p class="main-sub">Параллел ба Хуваарилагдсан Тооцоолол</p>
     </div>
-    <div class="header-right">
+    <div class="header-right" style="display:flex;align-items:center;gap:12px">
+      <span id="logged-as" style="font-size:12px;color:var(--text-muted)"></span>
+      <button class="clear-log-btn" id="logout-btn">Гарах</button>
       <div class="tab-btns">
         <button class="tab-btn active" onclick="showTab('part1')">Part I — Network</button>
         <button class="tab-btn" onclick="showTab('part2')">Part II — Heat</button>
@@ -40,17 +80,23 @@
   <!-- PART 1 -->
   <div id="tab-part1" class="tab-content active">
 
+    <!-- Room code -->
+    <div class="room-code-section">
+      <div class="room-code-label">⬡ Room Code</div>
+      <div class="room-code-value" id="room-code-display">----</div>
+      <button class="reset-code-btn" onclick="resetCode()">↺ Reset</button>
+    </div>
+
     <!-- Server Status Row -->
     <div class="servers-row">
       <div class="server-card" id="card-server-a">
         <div class="server-header">
           <div class="server-indicator" id="ind-a"></div>
           <span class="server-name">SERVER A</span>
-          <span class="server-port">:8001</span>
+          <span class="server-port">:3001</span>
         </div>
-        <div class="server-clients">
-          <span id="count-a">0</span> клиент холбоотой
-        </div>
+        <div class="server-clients"><span id="count-a">0</span> клиент</div>
+        <div class="server-client-list" id="clients-a"></div>
         <button class="toggle-btn btn-kill" id="btn-a" onclick="toggleServer('A')">
           <span>Kill Server A</span>
         </button>
@@ -58,27 +104,20 @@
 
       <div class="network-viz">
         <svg id="network-svg" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid meet">
-          <!-- Server A node -->
-          <circle cx="60" cy="60" r="22" class="svg-server-a" id="svg-sa"/>
+          <circle cx="60" cy="60" r="22" class="svg-server-a"/>
           <text x="60" y="65" text-anchor="middle" class="svg-label">A</text>
-          <!-- Server B node -->
-          <circle cx="240" cy="60" r="22" class="svg-server-b" id="svg-sb"/>
+          <circle cx="240" cy="60" r="22" class="svg-server-b"/>
           <text x="240" y="65" text-anchor="middle" class="svg-label">B</text>
-          <!-- A-B link -->
           <line x1="82" y1="60" x2="218" y2="60" class="svg-link" id="ab-link"/>
-          <!-- Client dots -->
           <circle cx="20" cy="25" r="8" class="svg-client c1"/>
           <text x="20" y="10" text-anchor="middle" class="svg-clabel">C1</text>
           <line x1="27" y1="30" x2="50" y2="52" class="svg-clink"/>
-
           <circle cx="20" cy="95" r="8" class="svg-client c2"/>
           <text x="20" y="115" text-anchor="middle" class="svg-clabel">C2</text>
           <line x1="27" y1="90" x2="50" y2="68" class="svg-clink"/>
-
           <circle cx="280" cy="25" r="8" class="svg-client c3"/>
           <text x="280" y="10" text-anchor="middle" class="svg-clabel">C3</text>
           <line x1="273" y1="30" x2="250" y2="52" class="svg-clink"/>
-
           <circle cx="280" cy="95" r="8" class="svg-client c4"/>
           <text x="280" y="115" text-anchor="middle" class="svg-clabel">C4</text>
           <line x1="273" y1="90" x2="250" y2="68" class="svg-clink"/>
@@ -89,101 +128,66 @@
         <div class="server-header">
           <div class="server-indicator" id="ind-b"></div>
           <span class="server-name">SERVER B</span>
-          <span class="server-port">:8002</span>
+          <span class="server-port">:3002</span>
         </div>
-        <div class="server-clients">
-          <span id="count-b">0</span> клиент холбоотой
-        </div>
+        <div class="server-clients"><span id="count-b">0</span> клиент</div>
+        <div class="server-client-list" id="clients-b"></div>
         <button class="toggle-btn btn-kill" id="btn-b" onclick="toggleServer('B')">
           <span>Kill Server B</span>
         </button>
       </div>
     </div>
 
-    <!-- 4 Client Panels -->
-    <div class="clients-grid">
-      <div class="client-panel" id="panel-1" data-client="1">
-        <div class="client-header">
-          <div class="client-badge c1">C1</div>
-          <div class="client-info">
-            <div class="client-title">Client 1</div>
-            <div class="client-server">→ Server A</div>
-          </div>
-          <div class="client-status" id="status-1">
-            <span class="dot offline"></span>
-            <span class="status-text">Disconnected</span>
-          </div>
-          <button class="connect-btn" id="conn-btn-1" onclick="toggleClient(1)">Connect</button>
+    <!-- Client launch buttons -->
+    <div class="client-launch-grid">
+      <div class="launch-card" data-client="1">
+        <div class="client-badge c1">C1</div>
+        <div class="launch-info">
+          <div class="launch-name">Client 1</div>
+          <div class="launch-srv">→ Server A · :3001</div>
         </div>
-        <div class="chat-box" id="chat-1"></div>
-        <div class="msg-input-row">
-          <input class="msg-input" id="input-1" placeholder="Мессеж бичнэ үү..." disabled onkeydown="if(event.key==='Enter') sendMsg(1)" />
-          <button class="send-btn" onclick="sendMsg(1)" disabled id="send-1">&#9658;</button>
-        </div>
-        <div class="client-mascot"><img src="/muur2.jpg" alt="mascot" /></div>
+        <button class="launch-btn" onclick="openClient(1)">Open Tab</button>
       </div>
-
-      <div class="client-panel" id="panel-2" data-client="2">
-        <div class="client-header">
-          <div class="client-badge c2">C2</div>
-          <div class="client-info">
-            <div class="client-title">Client 2</div>
-            <div class="client-server">→ Server A</div>
-          </div>
-          <div class="client-status" id="status-2">
-            <span class="dot offline"></span>
-            <span class="status-text">Disconnected</span>
-          </div>
-          <button class="connect-btn" id="conn-btn-2" onclick="toggleClient(2)">Connect</button>
+      <div class="launch-card" data-client="2">
+        <div class="client-badge c2">C2</div>
+        <div class="launch-info">
+          <div class="launch-name">Client 2</div>
+          <div class="launch-srv">→ Server A · :3001</div>
         </div>
-        <div class="chat-box" id="chat-2"></div>
-        <div class="msg-input-row">
-          <input class="msg-input" id="input-2" placeholder="Мессеж бичнэ үү..." disabled onkeydown="if(event.key==='Enter') sendMsg(2)" />
-          <button class="send-btn" onclick="sendMsg(2)" disabled id="send-2">&#9658;</button>
-        </div>
-        <div class="client-mascot"><img src="/muur2.jpg" alt="mascot" /></div>
+        <button class="launch-btn" onclick="openClient(2)">Open Tab</button>
       </div>
-
-      <div class="client-panel" id="panel-3" data-client="3">
-        <div class="client-header">
-          <div class="client-badge c3">C3</div>
-          <div class="client-info">
-            <div class="client-title">Client 3</div>
-            <div class="client-server">→ Server B</div>
-          </div>
-          <div class="client-status" id="status-3">
-            <span class="dot offline"></span>
-            <span class="status-text">Disconnected</span>
-          </div>
-          <button class="connect-btn" id="conn-btn-3" onclick="toggleClient(3)">Connect</button>
+      <div class="launch-card" data-client="3">
+        <div class="client-badge c3">C3</div>
+        <div class="launch-info">
+          <div class="launch-name">Client 3</div>
+          <div class="launch-srv">→ Server B · :3002</div>
         </div>
-        <div class="chat-box" id="chat-3"></div>
-        <div class="msg-input-row">
-          <input class="msg-input" id="input-3" placeholder="Мессеж бичнэ үү..." disabled onkeydown="if(event.key==='Enter') sendMsg(3)" />
-          <button class="send-btn" onclick="sendMsg(3)" disabled id="send-3">&#9658;</button>
-        </div>
-        <div class="client-mascot"><img src="/muur2.jpg" alt="mascot" /></div>
+        <button class="launch-btn" onclick="openClient(3)">Open Tab</button>
       </div>
+      <div class="launch-card" data-client="4">
+        <div class="client-badge c4">C4</div>
+        <div class="launch-info">
+          <div class="launch-name">Client 4</div>
+          <div class="launch-srv">→ Server B · :3002</div>
+        </div>
+        <button class="launch-btn" onclick="openClient(4)">Open Tab</button>
+      </div>
+    </div>
 
-      <div class="client-panel" id="panel-4" data-client="4">
-        <div class="client-header">
-          <div class="client-badge c4">C4</div>
-          <div class="client-info">
-            <div class="client-title">Client 4</div>
-            <div class="client-server">→ Server B</div>
-          </div>
-          <div class="client-status" id="status-4">
-            <span class="dot offline"></span>
-            <span class="status-text">Disconnected</span>
-          </div>
-          <button class="connect-btn" id="conn-btn-4" onclick="toggleClient(4)">Connect</button>
+    <!-- Admin management -->
+    <div class="admin-mgmt-section">
+      <div class="admin-mgmt-header" onclick="toggleAdminMgmt()">
+        <span>⚙ Admin удирдлага</span>
+        <span id="admin-mgmt-arrow">▾</span>
+      </div>
+      <div class="admin-mgmt-body" id="admin-mgmt-body">
+        <div class="admin-list" id="admin-list"></div>
+        <div class="add-admin-row">
+          <input id="new-admin-user" class="login-input" placeholder="Username..." style="flex:1" />
+          <input id="new-admin-pass" class="login-input" type="password" placeholder="Password..." style="flex:1" />
+          <button class="launch-btn" onclick="addAdmin()">+ Нэмэх</button>
         </div>
-        <div class="chat-box" id="chat-4"></div>
-        <div class="msg-input-row">
-          <input class="msg-input" id="input-4" placeholder="Мессеж бичнэ үү..." disabled onkeydown="if(event.key==='Enter') sendMsg(4)" />
-          <button class="send-btn" onclick="sendMsg(4)" disabled id="send-4">&#9658;</button>
-        </div>
-        <div class="client-mascot"><img src="/muur2.jpg" alt="mascot" /></div>
+        <div id="admin-mgmt-error" class="form-error" style="margin-top:6px"></div>
       </div>
     </div>
 
@@ -198,63 +202,39 @@
 
   </div>
 
-  <!-- PART 2 — Heat Distribution -->
+  <!-- PART 2 — Heat -->
   <div id="tab-part2" class="tab-content">
     <div class="heat-container">
       <div class="heat-controls-card">
         <h2 class="heat-title">Дулааны Тархалт — 1D Rod Simulation</h2>
         <p class="heat-desc">MPI Finite Difference Method · N=4096 · 4 процесс · C=0.25</p>
-
         <div class="heat-params">
-          <div class="param-group">
-            <label>N (цэгийн тоо)</label>
-            <input type="number" id="heat-n" value="4096" min="64" max="4096" step="64" />
-          </div>
-          <div class="param-group">
-            <label>Давталт</label>
-            <input type="number" id="heat-iter" value="1000" min="10" max="5000" step="10" />
-          </div>
-          <div class="param-group">
-            <label>C (дамжуулалт)</label>
-            <input type="number" id="heat-c" value="0.25" min="0.01" max="0.5" step="0.01" />
-          </div>
-          <div class="param-group">
-            <label>T_left (эхлэх дулаан)</label>
-            <input type="number" id="heat-tleft" value="100" min="10" max="1000" />
-          </div>
+          <div class="param-group"><label>N (цэгийн тоо)</label>
+            <input type="number" id="heat-n" value="4096" min="64" max="4096" step="64" /></div>
+          <div class="param-group"><label>Давталт</label>
+            <input type="number" id="heat-iter" value="1000" min="10" max="5000" step="10" /></div>
+          <div class="param-group"><label>C (дамжуулалт)</label>
+            <input type="number" id="heat-c" value="0.25" min="0.01" max="0.5" step="0.01" /></div>
+          <div class="param-group"><label>T_left (эхлэх дулаан)</label>
+            <input type="number" id="heat-tleft" value="100" min="10" max="1000" /></div>
         </div>
-
         <div class="heat-buttons">
-          <button class="heat-btn run-btn" onclick="runHeatSim()">
-            <span id="run-label">▶ Simulate</span>
-          </button>
+          <button class="heat-btn run-btn" onclick="runHeatSim()"><span id="run-label">▶ Simulate</span></button>
           <button class="heat-btn export-btn" onclick="exportCSV()">⬇ Export CSV</button>
         </div>
-
-        <!-- MPI Process indicators -->
         <div class="mpi-procs">
           <div class="proc-label">MPI Processes (Rank):</div>
           <div class="proc-bars">
-            <div class="proc-bar" id="proc-0"><span>Rank 0</span><div class="proc-prog" id="prog-0"></div></div>
-            <div class="proc-bar" id="proc-1"><span>Rank 1</span><div class="proc-prog" id="prog-1"></div></div>
-            <div class="proc-bar" id="proc-2"><span>Rank 2</span><div class="proc-prog" id="prog-2"></div></div>
-            <div class="proc-bar" id="proc-3"><span>Rank 3</span><div class="proc-prog" id="prog-3"></div></div>
+            <div class="proc-bar"><span>Rank 0</span><div class="proc-prog" id="prog-0"></div></div>
+            <div class="proc-bar"><span>Rank 1</span><div class="proc-prog" id="prog-1"></div></div>
+            <div class="proc-bar"><span>Rank 2</span><div class="proc-prog" id="prog-2"></div></div>
+            <div class="proc-bar"><span>Rank 3</span><div class="proc-prog" id="prog-3"></div></div>
           </div>
         </div>
       </div>
-
-      <!-- Rod Heatmap -->
-      <div class="rod-card">
-        <div class="rod-label">Temperature along rod</div>
-        <canvas id="rod-canvas" height="60"></canvas>
-      </div>
-
-      <!-- Chart -->
-      <div class="chart-card">
-        <canvas id="heat-chart"></canvas>
-      </div>
-
-      <!-- Stats -->
+      <div class="rod-card"><div class="rod-label">Temperature along rod</div>
+        <canvas id="rod-canvas" height="60"></canvas></div>
+      <div class="chart-card"><canvas id="heat-chart"></canvas></div>
       <div class="heat-stats" id="heat-stats"></div>
     </div>
   </div>
