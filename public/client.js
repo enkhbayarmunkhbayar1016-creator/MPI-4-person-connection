@@ -22,14 +22,9 @@ function toggleTheme() {
   });
 }
 
-(function initTheme() {
-  if (localStorage.getItem('theme') === 'light') {
-    document.documentElement.classList.add('light-mode');
-    document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
-      btn.textContent = '☀️';
-    });
-  }
-})();
+document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+  btn.textContent = localStorage.getItem('theme') === 'light' ? '☀️' : '🌙';
+});
 
 /* ─── Client config from URL ──────────────────────────────────── */
 const params    = new URLSearchParams(location.search);
