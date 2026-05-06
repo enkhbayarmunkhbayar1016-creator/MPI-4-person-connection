@@ -491,6 +491,7 @@ body {
   gap: 6px;
   padding: 8px;
   overflow-y: auto;
+  max-height: 240px;
 }
 .sticker-item {
   aspect-ratio: 1;

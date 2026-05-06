@@ -45,7 +45,19 @@ const GIFS = [
   { name: 'Clap', url: 'https://tenor.com/embed/10565906' },
   { name: 'Wave', url: 'https://tenor.com/embed/5556127' },
   { name: 'Thumbs Up', url: 'https://tenor.com/embed/19089405' },
-  { name: 'Party', url: 'https://tenor.com/embed/20069451' }
+  { name: 'Party', url: 'https://tenor.com/embed/20069451' },
+  { name: 'Break Chain', url: 'https://tenor.com/embed/10568195920471370545' },
+  { name: 'Nicolas Cage', url: 'https://tenor.com/embed/15812740' },
+  { name: 'Laugh Hard', url: 'https://tenor.com/embed/23420572' },
+  { name: 'Cheating', url: 'https://tenor.com/embed/26896890' },
+  { name: 'Oh My God', url: 'https://tenor.com/embed/8699431527531774396' },
+  { name: 'Dumb', url: 'https://tenor.com/embed/15786343844591191241' },
+  { name: 'Pray', url: 'https://tenor.com/embed/12588372197177242175' },
+  { name: 'Cute', url: 'https://tenor.com/embed/2169162382019330574' },
+  { name: 'Silly', url: 'https://tenor.com/embed/16000299074563007952' },
+  { name: 'Alcohol', url: 'https://tenor.com/embed/10994778270141665894' },
+  { name: 'Duong', url: 'https://tenor.com/embed/13022898936963954042' },
+  { name: 'Bald', url: 'https://tenor.com/embed/318102240449913950' }
 ];
 
 let currentStickerTab = 'sticker';
