@@ -97,10 +97,10 @@ function toggleServer(srv) {
 
 /* ─── Client GIFs (shown on connect) ─────────────────────────── */
 const clientGifs = {
-  1: 'https://tenor.com/embed/1936',
-  2: 'https://tenor.com/embed/73359',
-  3: 'https://tenor.com/embed/114809',
-  4: 'https://tenor.com/embed/221617'
+  1: 'https://tenor.com/embed/7908236508981105506',
+  2: 'https://tenor.com/embed/8640564821222907754',
+  3: 'https://tenor.com/embed/13942174665313107907',
+  4: 'https://tenor.com/embed/13097109864427045880'
 };
 
 function addGifMsg(clientId) {
