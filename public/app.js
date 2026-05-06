@@ -32,6 +32,7 @@ const BASE = window.location.origin;
 const sockets = {};
 // client id -> which namespace
 const clientNs = { 1: '/server-a', 2: '/server-a', 3: '/server-b', 4: '/server-b' };
+const originalNs = { 1: '/server-a', 2: '/server-a', 3: '/server-b', 4: '/server-b' };
 
 // Admin socket for server control + stats
 const adminSocket = io(BASE + '/admin');
@@ -76,19 +77,26 @@ function toggleServer(srv) {
   adminSocket.emit('toggle-server', { server: srv, online: !isOnline });
 
   if (isOnline) {
-    // Kick clients off this server in the UI
+    // Server going DOWN — failover clients
     [1, 2, 3, 4].forEach(id => {
       const ns = clientNs[id];
       if ((srv === 'A' && ns === '/server-a') || (srv === 'B' && ns === '/server-b')) {
         if (sockets[id]) {
           addSysMsg(id, `⚠ Server ${srv} is down — disconnected`);
           disconnectClient(id);
-          // Try reconnect to the other server
-          const fallback = srv === 'A' ? '/server-b' : '/server-a';
-          clientNs[id] = fallback;
-          document.querySelector(`#panel-${id} .client-server`).textContent =
-            `→ Server ${srv === 'A' ? 'B' : 'A'} (failover)`;
+          clientNs[id] = srv === 'A' ? '/server-b' : '/server-a';
           setTimeout(() => connectClient(id), 600);
+        }
+      }
+    });
+  } else {
+    // Server coming back ONLINE — restore original connections
+    [1, 2, 3, 4].forEach(id => {
+      if (originalNs[id] === `/server-${srv.toLowerCase()}`) {
+        clientNs[id] = originalNs[id];
+        if (sockets[id]) {
+          disconnectClient(id);
+          setTimeout(() => connectClient(id), 800);
         }
       }
     });
@@ -123,6 +131,11 @@ function toggleClient(id) {
 
 function connectClient(id) {
   const ns = clientNs[id];
+  const serverLetter = ns === '/server-a' ? 'A' : 'B';
+  const isFailover = ns !== originalNs[id];
+  document.querySelector(`#panel-${id} .client-server`).textContent =
+    isFailover ? `→ Server ${serverLetter} (failover)` : `→ Server ${serverLetter}`;
+
   const sock = io(BASE + ns, { query: { clientId: id }, reconnection: false });
   sockets[id] = sock;
 
@@ -143,10 +156,7 @@ function connectClient(id) {
 
   sock.on('server-down', (data) => {
     addSysMsg(id, `⚠ Server down! Reconnecting to Server ${data.redirect}...`);
-    const fallback = data.redirect === 'A' ? '/server-a' : '/server-b';
-    clientNs[id] = fallback;
-    document.querySelector(`#panel-${id} .client-server`).textContent =
-      `→ Server ${data.redirect} (failover)`;
+    clientNs[id] = data.redirect === 'A' ? '/server-a' : '/server-b';
     disconnectClient(id);
     setTimeout(() => connectClient(id), 800);
   });
@@ -265,59 +275,64 @@ function runHeatSim() {
 
   document.getElementById('run-label').textContent = 'Simulating...';
 
-  // Use 4 "MPI processes" simulated sequentially
   const numProcs = 4;
   const localN = Math.floor(N / numProcs);
 
-  // Initialize temperature array
-  let temp = new Float64Array(N).fill(0);
-  temp[0] = Tleft; // Left boundary (Rank 0 left end)
+  // 4 MPI process-ийн локал массив — procs[r][0..localN-1]
+  let procs = Array.from({ length: numProcs }, () => new Float64Array(localN).fill(0));
+  // Rank 0-ийн зүүн захын утга = Tleft
+  procs[0][0] = Tleft;
 
   const startTime = performance.now();
-
-  // Simulate MPI-style with 4 chunks
-  function step() {
-    const next = new Float64Array(N);
-    next[0] = Tleft; // fixed boundary
-    next[N - 1] = 0; // fixed boundary
-
-    for (let i = 1; i < N - 1; i++) {
-      next[i] = temp[i] + C * (temp[i - 1] - 2 * temp[i] + temp[i + 1]);
-    }
-    return next;
-  }
-
-  // Run in chunks using setTimeout to keep UI responsive
   let iter = 0;
   const BATCH = 50;
 
-  function runBatch() {
-    for (let b = 0; b < BATCH && iter < iterations; b++, iter++) {
-      temp = step();
+  function step() {
+    // MPI_Sendrecv: хөрш процессуудтай ghost cell солилцох
+    const leftGhost = new Float64Array(numProcs);
+    const rightGhost = new Float64Array(numProcs);
+    for (let r = 0; r < numProcs; r++) {
+      leftGhost[r]  = r > 0            ? procs[r-1][localN-1] : Tleft;
+      rightGhost[r] = r < numProcs - 1 ? procs[r+1][0]        : 0;
     }
 
-    // Update proc progress bars
-    const pct = (iter / iterations * 100).toFixed(0);
-    for (let r = 0; r < 4; r++) {
-      const prog = document.getElementById('prog-' + r);
-      const offset = r * (iterations / 4);
-      const localPct = Math.min(100, Math.max(0, (iter - offset) / (iterations / 4) * 100));
-      prog.style.setProperty('--w', localPct + '%');
-      prog.style.cssText = `--w:${localPct}%; `;
-      prog.querySelector ? null : null;
-      prog.style.setProperty('width', '0'); // trigger via after pseudo
-      prog.setAttribute('data-pct', localPct);
-      prog.style.cssText = ``;
-      // Direct width on ::after not possible via JS, use a width span trick
-      prog.innerHTML = `<span style="display:block;height:100%;width:${localPct.toFixed(0)}%;background:linear-gradient(90deg,#00d4ff,#a855f7);border-radius:3px;transition:width 0.1s"></span>`;
+    const next = procs.map(p => new Float64Array(p));
+    for (let r = 0; r < numProcs; r++) {
+      for (let i = 0; i < localN; i++) {
+        // Тогтмол хил
+        if (r === 0 && i === 0)              { next[r][i] = Tleft; continue; }
+        if (r === numProcs-1 && i === localN-1) { next[r][i] = 0;     continue; }
+
+        const left  = i === 0        ? leftGhost[r]  : procs[r][i-1];
+        const right = i === localN-1 ? rightGhost[r] : procs[r][i+1];
+        // next_temp[i] = current_temp[i] + C*(left - 2*current + right)
+        next[r][i] = procs[r][i] + C * (left - 2.0 * procs[r][i] + right);
+      }
+    }
+    procs = next;
+  }
+
+  function runBatch() {
+    for (let b = 0; b < BATCH && iter < iterations; b++, iter++) {
+      step();
+    }
+
+    // Rank бүрийн progress bar шинэчлэх
+    for (let r = 0; r < numProcs; r++) {
+      const pct = Math.min(100, (iter / iterations * 100)).toFixed(0);
+      document.getElementById('prog-' + r).innerHTML =
+        `<span style="display:block;height:100%;width:${pct}%;background:linear-gradient(90deg,#00d4ff,#a855f7);border-radius:3px;transition:width 0.1s"></span>`;
     }
 
     if (iter < iterations) {
       requestAnimationFrame(runBatch);
     } else {
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
-      simData = temp;
-      renderHeatResults(temp, N, elapsed, iterations, C, Tleft);
+      // MPI_Gather: процесс бүрийн үр дүнг нэгтгэх
+      const fullTemp = new Float64Array(N);
+      for (let r = 0; r < numProcs; r++) fullTemp.set(procs[r], r * localN);
+      simData = fullTemp;
+      renderHeatResults(fullTemp, N, elapsed, iterations, C, Tleft);
       document.getElementById('run-label').textContent = '▶ Simulate';
     }
   }
