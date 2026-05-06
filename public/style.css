@@ -27,28 +27,30 @@
 }
 
 :root.light-mode {
-  /* Light mode */
-  --bg: #f0f2f5;
+  /* Light mode — цагаан */
+  --bg: #ffffff;
   --bg2: #ffffff;
-  --bg3: #e4e6ea;
-  --card: rgba(0,0,0,0.04);
-  --card-border: rgba(0,0,0,0.1);
-  --accent-a: #0077ee;
-  --accent-b: #8b2be2;
-  --accent-green: #15803d;
+  --bg3: #f3f4f6;
+  --card: rgba(0,0,0,0.03);
+  --card-border: rgba(0,0,0,0.09);
+  --accent-a: #0070e0;
+  --accent-b: #7c3aed;
+  --accent-green: #16a34a;
   --accent-red: #dc2626;
-  --accent-yellow: #b45309;
-  --c1: #0077ee;
-  --c2: #8b2be2;
-  --c3: #15803d;
-  --c4: #c2410c;
+  --accent-yellow: #d97706;
+  --c1: #0070e0;
+  --c2: #7c3aed;
+  --c3: #16a34a;
+  --c4: #ea580c;
   --text: #111827;
-  --text-muted: rgba(55,65,81,0.7);
-  --glow-a: 0 0 16px rgba(0,119,238,0.15);
-  --glow-b: 0 0 16px rgba(139,43,226,0.15);
-  --glow-g: 0 0 16px rgba(21,128,61,0.15);
-  --input-bg: rgba(0,0,0,0.05);
-  --input-border: rgba(0,0,0,0.15);
+  --text-muted: rgba(75,85,99,0.8);
+  --glow-a: 0 2px 12px rgba(0,112,224,0.12);
+  --glow-b: 0 2px 12px rgba(124,58,237,0.12);
+  --glow-g: 0 2px 12px rgba(22,163,74,0.12);
+  --input-bg: #f9fafb;
+  --input-border: rgba(0,0,0,0.14);
+  --surface-hover: rgba(0,0,0,0.04);
+  --surface-sub: rgba(0,0,0,0.025);
 }
 
 :root {
@@ -959,3 +961,180 @@ body.client-body {
   border-radius: 20px; padding: 3px 10px; white-space: nowrap;
 }
 .client-chat { flex: 1; min-height: 0; max-height: none; }
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+   ═══════════════════════════════════════════════════════════════ */
+.light-mode body {
+  background: #ffffff;
+}
+
+/* Cards / panels — цагаан дэвсгэр, бүдэг сүүдэр */
+.light-mode .server-card,
+.light-mode .network-viz,
+.light-mode .launch-card,
+.light-mode .log-section,
+.light-mode .heat-controls-card,
+.light-mode .rod-card,
+.light-mode .chart-card,
+.light-mode .stat-box,
+.light-mode .admin-mgmt-section,
+.light-mode .room-code-section,
+.light-mode .login-card,
+.light-mode .join-card,
+.light-mode .sticker-panel {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.09);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+}
+
+/* Header / sub-header дэвсгэрүүд */
+.light-mode .header,
+.light-mode .log-header,
+.light-mode .client-header,
+.light-mode .client-topbar,
+.light-mode .sticker-header,
+.light-mode .admin-mgmt-header {
+  background: #f9fafb;
+  border-color: rgba(0,0,0,0.09);
+}
+
+.light-mode .admin-mgmt-header:hover { background: #f3f4f6; }
+.light-mode .admin-mgmt-body { background: #ffffff; }
+
+/* Login overlay — бүхэлдээ цагаан */
+.light-mode .admin-login-overlay { background: #f5f7fa; }
+.light-mode .join-overlay { background: rgba(245,247,250,0.97); }
+
+/* Chat bubbles */
+.light-mode .msg-bubble.own {
+  background: #e8f2ff;
+  border-color: rgba(0,112,224,0.2);
+}
+.light-mode .msg-bubble.other {
+  background: #f3f4f6;
+  border-color: rgba(0,0,0,0.08);
+}
+.light-mode .msg-bubble.sys {
+  background: rgba(217,119,6,0.08);
+  border-color: rgba(217,119,6,0.25);
+}
+
+/* Inputs */
+.light-mode .login-input,
+.light-mode .join-input,
+.light-mode .msg-input,
+.light-mode .topbar-server-select,
+.light-mode .param-group input {
+  background: #f9fafb;
+  border-color: rgba(0,0,0,0.14);
+  color: #111827;
+}
+.light-mode .login-input:focus,
+.light-mode .join-input:focus,
+.light-mode .msg-input:focus,
+.light-mode .param-group input:focus {
+  background: #ffffff;
+  border-color: var(--accent-a);
+}
+
+/* Buttons */
+.light-mode .sticker-btn {
+  background: #f3f4f6;
+  border-color: rgba(0,0,0,0.12);
+  color: #374151;
+}
+.light-mode .sticker-btn:hover:not(:disabled) {
+  background: #e8f2ff;
+  border-color: var(--accent-a);
+}
+.light-mode .clear-log-btn {
+  border-color: rgba(0,0,0,0.15);
+  color: #6b7280;
+}
+.light-mode .clear-log-btn:hover { background: #f3f4f6; }
+.light-mode .export-btn {
+  background: #f3f4f6;
+  border-color: rgba(0,0,0,0.12);
+  color: #374151;
+}
+.light-mode .export-btn:hover { background: #e8f2ff; }
+.light-mode .tab-btn {
+  background: #f3f4f6;
+  border-color: rgba(0,0,0,0.1);
+  color: #6b7280;
+}
+.light-mode .tab-btn.active,
+.light-mode .tab-btn:hover {
+  background: #e8f2ff;
+  border-color: var(--accent-a);
+  color: var(--accent-a);
+}
+.light-mode .close-panel-btn {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.light-mode .tab-sticker {
+  background: #f3f4f6;
+  border-color: rgba(0,0,0,0.1);
+  color: #6b7280;
+}
+.light-mode .tab-sticker:hover:not(.active) { background: #e8f2ff; }
+.light-mode .auth-tab:hover:not(.active) { background: #f3f4f6; }
+
+/* Sticker / GIF panel items */
+.light-mode .sticker-item {
+  background: #f9fafb;
+  border-color: rgba(0,0,0,0.09);
+}
+.light-mode .sticker-item:hover {
+  background: #e8f2ff;
+  border-color: var(--accent-a);
+}
+
+/* Log box */
+.light-mode .log-box {
+  background: #fafafa;
+  scrollbar-color: rgba(0,0,0,0.12) transparent;
+}
+.light-mode .log-box::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+
+/* Connected client rows / admin list rows */
+.light-mode .connected-client-row,
+.light-mode .admin-list-row {
+  background: #f3f4f6;
+}
+
+/* Server card borders stay colored but lighter */
+.light-mode .server-card#card-server-a { border-color: rgba(0,112,224,0.25); }
+.light-mode .server-card#card-server-b { border-color: rgba(124,58,237,0.25); }
+
+/* SVG network labels — dark on white */
+.light-mode .svg-label { fill: #111827; }
+.light-mode .svg-link  { stroke: rgba(0,0,0,0.15); }
+.light-mode .svg-clink { stroke: rgba(0,0,0,0.12); }
+.light-mode .svg-clabel { fill: #6b7280; }
+.light-mode .svg-server-a { fill: rgba(0,112,224,0.08); }
+.light-mode .svg-server-b { fill: rgba(124,58,237,0.08); }
+.light-mode .svg-client.c1 { fill: rgba(0,112,224,0.12); }
+.light-mode .svg-client.c2 { fill: rgba(124,58,237,0.12); }
+.light-mode .svg-client.c3 { fill: rgba(22,163,74,0.12); }
+.light-mode .svg-client.c4 { fill: rgba(234,88,12,0.12); }
+
+/* Scrollbars */
+.light-mode .chat-box {
+  scrollbar-color: rgba(0,0,0,0.1) transparent;
+}
+.light-mode .chat-box::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); }
+
+/* Client mascot border */
+.light-mode .client-mascot img { border-color: rgba(0,0,0,0.1); opacity: 0.9; }
+
+/* MPI progress bar track */
+.light-mode .proc-prog { background: rgba(0,0,0,0.07); }
+
+/* Room code section */
+.light-mode .room-code-section { border-color: rgba(0,112,224,0.2); }
+
+/* Particles — цайвар болгох */
+.light-mode .particle { opacity: 0.06; }
