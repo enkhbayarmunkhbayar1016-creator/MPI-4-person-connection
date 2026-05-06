@@ -3,9 +3,7 @@ const http    = require('http');
 const { Server } = require('socket.io');
 const path    = require('path');
 
-const WEB_PORT = process.env.PORT   || 3000;
-const PORT_A   = process.env.PORT_A || 3001;
-const PORT_B   = process.env.PORT_B || 3002;
+const WEB_PORT = process.env.PORT || 3000;
 
 /* ── Web server ─────────────────────────────────────────────────── */
 const app = express();
@@ -14,16 +12,10 @@ app.use(express.json());
 const webHttp = http.createServer(app);
 const webIo   = new Server(webHttp, { cors: { origin: '*', methods: ['GET', 'POST'] } });
 
-/* ── Socket servers ─────────────────────────────────────────────── */
-const httpA = http.createServer();
-const ioA   = new Server(httpA, { cors: { origin: '*', methods: ['GET', 'POST'] } });
-const httpB = http.createServer();
-const ioB   = new Server(httpB, { cors: { origin: '*', methods: ['GET', 'POST'] } });
-
 /* ── Admin auth ─────────────────────────────────────────────────── */
 const admins  = new Map([['admin', 'admin123']]);
-const sessions = new Map();  // token -> username
-const clients  = new Map();  // username -> { id }
+const sessions = new Map();
+const clients  = new Map();
 let   nextClientId = 1;
 
 function mkToken() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
@@ -47,10 +39,6 @@ app.post('/api/login', (req, res) => {
   } else {
     res.status(401).json({ error: 'Буруу нэвтрэх мэдээлэл' });
   }
-});
-
-app.get('/api/room-code', (req, res) => {
-  res.json({ code: roomCode });
 });
 
 app.post('/api/register', (req, res) => {
@@ -98,10 +86,6 @@ app.delete('/api/admins/:username', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-/* ── Room code ──────────────────────────────────────────────────── */
-function mkCode() { return Math.random().toString(36).slice(2, 6).toUpperCase(); }
-let roomCode = mkCode();
-
 /* ── Shared state ───────────────────────────────────────────────── */
 const state = {
   A: { online: true, clients: new Map() },
@@ -111,6 +95,8 @@ const messages = [];
 const RELAY_MS = 250;
 
 const adminNs = webIo.of('/admin');
+const nsA     = webIo.of('/server-a');
+const nsB     = webIo.of('/server-b');
 
 function getStats() {
   const mapClients = srv =>
@@ -125,10 +111,10 @@ function getStats() {
 function pushStats()    { adminNs.emit('stats',      getStats()); }
 function pushLog(entry) { adminNs.emit('system-log', entry); }
 
-/* ── Socket server logic ────────────────────────────────────────── */
-function attachServer(io, srv, otherIo) {
-  io.on('connection', socket => {
-    const { clientId, name, code } = socket.handshake.query;
+/* ── Socket namespace logic ─────────────────────────────────────── */
+function attachServer(ns, srv, otherNs) {
+  ns.on('connection', socket => {
+    const { clientId, name } = socket.handshake.query;
 
     if (!state[srv].online) {
       socket.emit('server-down', { redirect: srv === 'A' ? 'B' : 'A' });
@@ -150,8 +136,8 @@ function attachServer(io, srv, otherIo) {
       messages.push(msg);
       if (messages.length > 100) messages.shift();
 
-      io.emit('message', msg);
-      setTimeout(() => otherIo.emit('message', msg), RELAY_MS);
+      ns.emit('message', msg);
+      setTimeout(() => otherNs.emit('message', msg), RELAY_MS);
       adminNs.emit('message', msg);
       pushLog({ text: `${displayName} → Srv ${srv} → relay → Srv ${srv === 'A' ? 'B' : 'A'}`, type: 'relay', time: Date.now() });
     });
@@ -164,32 +150,25 @@ function attachServer(io, srv, otherIo) {
   });
 }
 
-attachServer(ioA, 'A', ioB);
-attachServer(ioB, 'B', ioA);
+attachServer(nsA, 'A', nsB);
+attachServer(nsB, 'B', nsA);
 
 /* ── Admin namespace ────────────────────────────────────────────── */
 adminNs.on('connection', socket => {
-  socket.emit('stats',     getStats());
-  socket.emit('room-code', roomCode);
+  socket.emit('stats', getStats());
 
   socket.on('toggle-server', ({ server, online }) => {
     state[server].online = online;
     if (!online) {
-      (server === 'A' ? ioA : ioB).emit('server-down', { redirect: server === 'A' ? 'B' : 'A' });
+      (server === 'A' ? nsA : nsB).emit('server-down', { redirect: server === 'A' ? 'B' : 'A' });
       state[server].clients.clear();
     }
     pushStats();
     pushLog({ text: `Server ${server} ${online ? 'ONLINE' : 'OFFLINE'}`, type: online ? 'online' : 'offline', time: Date.now() });
   });
 
-  socket.on('reset-code', () => {
-    roomCode = mkCode();
-    adminNs.emit('room-code', roomCode);
-    pushLog({ text: `Room code reset → ${roomCode}`, type: 'online', time: Date.now() });
-  });
-
   socket.on('kick-client', ({ sid, srv }) => {
-    const target = (srv === 'A' ? ioA : ioB).sockets.get(sid);
+    const target = (srv === 'A' ? nsA : nsB).sockets.get(sid);
     if (target) {
       target.emit('kicked', 'Admin таныг холбооноос салгалаа');
       target.disconnect();
@@ -198,6 +177,4 @@ adminNs.on('connection', socket => {
 });
 
 /* ── Start ──────────────────────────────────────────────────────── */
-webHttp.listen(WEB_PORT, () => console.log(`Web   :${WEB_PORT}`));
-httpA.listen(PORT_A,     () => console.log(`Srv A :${PORT_A}`));
-httpB.listen(PORT_B,     () => console.log(`Srv B :${PORT_B}`));
+webHttp.listen(WEB_PORT, () => console.log(`Server running on port ${WEB_PORT}`));
