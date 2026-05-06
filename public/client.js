@@ -21,8 +21,8 @@ const urlName   = params.get('name') || '';
 const ORIGINAL_SRV = { 1: 'A', 2: 'A', 3: 'B', 4: 'B' };
 const SRV_PORT     = { A: 3001, B: 3002 };
 const SERVER_URLS  = {
-  A: `${location.protocol}//${location.hostname}:3001`,
-  B: `${location.protocol}//${location.hostname}:3002`
+  A: `${location.origin}/server-a`,
+  B: `${location.origin}/server-b`
 };
 const CLIENT_GIFS  = {
   1: 'https://tenor.com/embed/7908236508981105506',
@@ -203,9 +203,10 @@ function connect() {
     }
   });
 
-  sock.on('connect_error', () => {
+  sock.on('connect_error', err => {
     setStatus('offline');
-    addSys('Connection failed');
+    addSys(`Connection failed: ${err && err.message ? err.message : 'server unavailable'}`);
+    showJoin('Холболт амжилтгүй боллоо. Сервер ажиллаж байгаа эсэхийг шалгана уу.');
     sock = null;
   });
 }
