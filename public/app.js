@@ -13,6 +13,24 @@
   }
 })();
 
+/* ─── Theme ───────────────────────────────────────────────────── */
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light-mode');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    btn.textContent = isLight ? '☀️' : '🌙';
+  });
+}
+
+(function initTheme() {
+  if (localStorage.getItem('theme') === 'light') {
+    document.documentElement.classList.add('light-mode');
+    document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+      btn.textContent = '☀️';
+    });
+  }
+})();
+
 /* ─── Tab ─────────────────────────────────────────────────────── */
 function showTab(name) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));

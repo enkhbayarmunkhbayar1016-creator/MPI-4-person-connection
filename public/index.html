@@ -15,6 +15,7 @@
 <!-- Auth overlay (Login / Register) -->
 <div class="admin-login-overlay" id="admin-login-overlay">
   <div class="login-card">
+    <button class="theme-toggle-btn" id="theme-toggle-login" onclick="toggleTheme()" style="align-self:flex-end;margin-bottom:4px">🌙</button>
     <div class="login-icon">⬡</div>
     <div class="login-title">F.CSM306</div>
     <div class="login-sub">Лаборатори Ажил №4</div>
@@ -69,6 +70,7 @@
     </div>
     <div class="header-right" style="display:flex;align-items:center;gap:12px">
       <span id="logged-as" style="font-size:12px;color:var(--text-muted)"></span>
+      <button class="theme-toggle-btn" id="theme-toggle-admin" onclick="toggleTheme()">🌙</button>
       <button class="clear-log-btn" id="logout-btn">Гарах</button>
       <div class="tab-btns">
         <button class="tab-btn active" onclick="showTab('part1')">Part I — Network</button>

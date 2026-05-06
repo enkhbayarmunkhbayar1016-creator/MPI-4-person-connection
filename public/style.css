@@ -2,6 +2,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  /* Dark mode (default) */
   --bg: #050510;
   --bg2: #0b0b1f;
   --bg3: #111128;
@@ -25,13 +26,45 @@
   --font: 'Segoe UI', system-ui, sans-serif;
 }
 
+:root.light-mode {
+  /* Light mode */
+  --bg: #f0f2f5;
+  --bg2: #ffffff;
+  --bg3: #e4e6ea;
+  --card: rgba(0,0,0,0.04);
+  --card-border: rgba(0,0,0,0.1);
+  --accent-a: #0077ee;
+  --accent-b: #8b2be2;
+  --accent-green: #15803d;
+  --accent-red: #dc2626;
+  --accent-yellow: #b45309;
+  --c1: #0077ee;
+  --c2: #8b2be2;
+  --c3: #15803d;
+  --c4: #c2410c;
+  --text: #111827;
+  --text-muted: rgba(55,65,81,0.7);
+  --glow-a: 0 0 16px rgba(0,119,238,0.15);
+  --glow-b: 0 0 16px rgba(139,43,226,0.15);
+  --glow-g: 0 0 16px rgba(21,128,61,0.15);
+  --input-bg: rgba(0,0,0,0.05);
+  --input-border: rgba(0,0,0,0.15);
+}
+
+:root {
+  --input-bg: rgba(255,255,255,0.06);
+  --input-border: rgba(255,255,255,0.12);
+}
+
 body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.3s, color 0.3s;
 }
+
 
 
 /* ─── Particles ──────────────────────────────────────────────── */
@@ -289,8 +322,8 @@ body {
 }
 .connect-btn:hover { background: rgba(0,212,255,0.25); }
 .topbar-server-select {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   color: var(--text); font-size: 12px; font-weight: 600;
   padding: 6px 10px; cursor: pointer; outline: none;
@@ -393,8 +426,8 @@ body {
 }
 .msg-input {
   flex: 1;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   padding: 7px 10px;
   color: var(--text);
@@ -423,8 +456,8 @@ body {
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
   color: var(--text);
   cursor: pointer;
   font-size: 18px;
@@ -509,6 +542,12 @@ body {
   background: rgba(0,212,255,0.15);
   border-color: var(--accent-a);
   transform: scale(1.05);
+}
+.gif-pick-item {
+  font-size: 11px;
+  padding: 6px 4px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .client-main {
@@ -603,8 +642,8 @@ body {
 .param-group label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; }
 .param-group input {
   width: 100%;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   padding: 8px 10px;
   color: var(--text);
@@ -709,6 +748,7 @@ body {
   background: var(--bg2);
   border: 1px solid var(--card-border);
   border-radius: 20px;
+  transition: background 0.3s, border-color 0.3s;
   padding: 40px 36px;
   min-width: 320px; max-width: 380px; width: 90%;
   text-align: center;
@@ -721,8 +761,8 @@ body {
 .login-form  { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 .login-input {
   width: 100%;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   padding: 12px 14px;
   color: var(--text); font-size: 14px; outline: none;
@@ -738,6 +778,28 @@ body {
 }
 .login-submit:hover { opacity: 0.85; }
 .form-error { color: var(--accent-red); font-size: 12px; min-height: 16px; text-align: left; }
+
+/* ─── Theme toggle button ─────────────────────────────────────── */
+.theme-toggle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  font-size: 17px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.theme-toggle-btn:hover {
+  background: rgba(0,212,255,0.12);
+  border-color: var(--accent-a);
+  transform: rotate(20deg) scale(1.1);
+}
 
 /* ─── Auth tabs ───────────────────────────────────────────────── */
 .auth-tabs {
@@ -870,8 +932,8 @@ body.client-body {
 .join-sub   { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
 .join-form  { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 .join-input {
-  width: 100%; background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+  width: 100%; background: var(--input-bg);
+  border: 1px solid var(--input-border); border-radius: 10px;
   padding: 12px 14px; color: var(--text); font-size: 14px; outline: none;
   transition: border-color 0.2s; font-family: var(--font);
 }

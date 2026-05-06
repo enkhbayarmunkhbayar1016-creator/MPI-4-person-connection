@@ -13,6 +13,24 @@
   }
 })();
 
+/* ─── Theme ───────────────────────────────────────────────────── */
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light-mode');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    btn.textContent = isLight ? '☀️' : '🌙';
+  });
+}
+
+(function initTheme() {
+  if (localStorage.getItem('theme') === 'light') {
+    document.documentElement.classList.add('light-mode');
+    document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+      btn.textContent = '☀️';
+    });
+  }
+})();
+
 /* ─── Client config from URL ──────────────────────────────────── */
 const params    = new URLSearchParams(location.search);
 const clientId  = parseInt(params.get('id')) || 1;
@@ -30,6 +48,17 @@ const CLIENT_GIFS  = {
   3: 'https://tenor.com/embed/13942174665313107907',
   4: 'https://tenor.com/embed/13097109864427045880'
 };
+
+const TENOR_KEY = 'LIVDSRZULELA';
+
+async function resolveTenorUrl(embedUrl) {
+  const postId = embedUrl.replace(/.*\/embed\//, '');
+  try {
+    const r = await fetch(`https://tenor.googleapis.com/v2/posts?ids=${postId}&key=${TENOR_KEY}`);
+    const d = await r.json();
+    return d.results?.[0]?.media_formats?.gif?.url || null;
+  } catch { return null; }
+}
 
 /* ─── Stickers & GIFs ─────────────────────────────────────────── */
 const STICKERS = [
@@ -117,11 +146,16 @@ function addSys(text) {
   appendChat('msg-bubble sys', null, text);
 }
 
-function addGif() {
+async function addGif() {
   const div = document.createElement('div');
   div.className = 'msg-bubble gif-msg';
-  div.innerHTML = `<iframe src="${CLIENT_GIFS[clientId]}" frameborder="0" allowfullscreen></iframe>`;
   appendRaw(div);
+  const mediaUrl = await resolveTenorUrl(CLIENT_GIFS[clientId]);
+  if (mediaUrl) {
+    div.innerHTML = `<img src="${mediaUrl}" alt="GIF" loading="lazy" style="width:100%;max-width:280px;border-radius:8px;display:block">`;
+  } else {
+    div.innerHTML = `<iframe src="${CLIENT_GIFS[clientId]}" frameborder="0" allow="autoplay" allowfullscreen></iframe>`;
+  }
 }
 
 function appendChat(cls, msg, text) {
@@ -138,7 +172,13 @@ function appendChat(cls, msg, text) {
       div.innerHTML = msgMeta + `<div class="msg-sticker">${msg.text}</div>`;
     } else if (msg.type === 'gif') {
       div.className += ' gif-msg';
-      div.innerHTML = msgMeta + `<iframe src="${escHtml(msg.text)}" frameborder="0" allowfullscreen></iframe>`;
+      const src = escHtml(msg.text);
+      const isMedia = src.includes('media.tenor.com') || src.match(/\.(gif|webp|mp4)(\?|$)/i);
+      if (isMedia) {
+        div.innerHTML = msgMeta + `<img src="${src}" alt="GIF" loading="lazy" style="width:100%;max-width:280px;border-radius:8px;display:block">`;
+      } else {
+        div.innerHTML = msgMeta + `<iframe src="${src}" frameborder="0" allow="autoplay" allowfullscreen></iframe>`;
+      }
     } else {
       div.innerHTML = msgMeta + escHtml(msg.text);
     }
@@ -194,9 +234,9 @@ function renderStickerPanel(tab) {
   } else {
     GIFS.forEach(gif => {
       const item = document.createElement('div');
-      item.className = 'sticker-item';
-      item.textContent = '🎬';
+      item.className = 'sticker-item gif-pick-item';
       item.title = gif.name;
+      item.innerHTML = `<span style="font-size:11px;text-align:center;line-height:1.2;word-break:break-word">${gif.name}</span>`;
       item.onclick = () => sendGif(gif.url);
       content.appendChild(item);
     });
@@ -209,10 +249,11 @@ function sendSticker(sticker) {
   toggleStickerPanel();
 }
 
-function sendGif(gifUrl) {
+async function sendGif(gifUrl) {
   if (!sock) return;
-  sock.emit('message', { text: gifUrl, type: 'gif' });
   toggleStickerPanel();
+  const mediaUrl = await resolveTenorUrl(gifUrl);
+  sock.emit('message', { text: mediaUrl || gifUrl, type: 'gif' });
 }
 
 /* ─── Join flow ───────────────────────────────────────────────── */
