@@ -16,7 +16,6 @@
 /* ─── Client config from URL ──────────────────────────────────── */
 const params    = new URLSearchParams(location.search);
 const clientId  = parseInt(params.get('id')) || 1;
-const urlCode   = params.get('code') || '';
 const urlName   = params.get('name') || '';
 
 const ORIGINAL_SRV = { 1: 'A', 2: 'A', 3: 'B', 4: 'B' };
@@ -68,7 +67,7 @@ function switchServer(newSrv) {
   saved.srv  = newSrv;
   sessionStorage.setItem(SESS_KEY, JSON.stringify(saved));
   addSys(`Сервер солиж байна → Server ${newSrv}...`);
-  setTimeout(() => connect(saved.code), 400);
+  setTimeout(() => connect(), 400);
 }
 
 function updateSrvLabel() {
@@ -122,19 +121,17 @@ function enableInput(on) {
 /* ─── Join flow ───────────────────────────────────────────────── */
 function handleJoin() {
   const name = document.getElementById('join-name').value.trim();
-  const code = document.getElementById('join-code').value.trim().toUpperCase();
   const srv  = document.getElementById('join-server').value;
   const err  = document.getElementById('join-error');
 
   if (!name) { err.textContent = 'Нэрээ оруулна уу'; return; }
-  if (!code) { err.textContent = 'Room code оруулна уу'; return; }
   err.textContent = '';
   userName   = name;
   currentSrv = srv;
 
-  sessionStorage.setItem(SESS_KEY, JSON.stringify({ name, code, srv: currentSrv }));
+  sessionStorage.setItem(SESS_KEY, JSON.stringify({ name, srv: currentSrv }));
   showChat();
-  connect(code);
+  connect();
 }
 
 function showChat() {
@@ -151,12 +148,12 @@ function showJoin(errorMsg) {
 }
 
 /* ─── Socket connection ───────────────────────────────────────── */
-function connect(code) {
+function connect() {
   updateSrvLabel();
   setStatus('connecting');
 
   sock = io(SERVER_URLS[currentSrv], {
-    query: { clientId, name: userName, code },
+    query: { clientId, name: userName },
     reconnection: false
   });
 
@@ -192,9 +189,8 @@ function connect(code) {
   sock.on('server-down', data => {
     addSys(`⚠ Server down! Reconnecting to Server ${data.redirect}...`);
     currentSrv = data.redirect;
-    const saved = JSON.parse(sessionStorage.getItem(SESS_KEY) || '{}');
     disconnect(false);
-    setTimeout(() => connect(saved.code || code), 800);
+    setTimeout(() => connect(), 800);
   });
 
   sock.on('disconnect', () => {
@@ -228,7 +224,7 @@ function toggleConnect() {
     disconnect();
   } else {
     const saved = JSON.parse(sessionStorage.getItem(SESS_KEY) || 'null');
-    if (saved && saved.code) connect(saved.code);
+    if (saved && saved.name) connect();
     else showJoin();
   }
 }
@@ -250,29 +246,19 @@ document.getElementById('conn-btn').onclick    = toggleConnect;
 document.getElementById('send-btn').onclick    = sendMsg;
 document.getElementById('input').onkeydown     = e => { if (e.key === 'Enter') sendMsg(); };
 
-/* ─── Pre-fill name/server from URL, fetch room code ──────────── */
+/* ─── Pre-fill name/server from URL ───────────────────────────── */
 if (urlName) document.getElementById('join-name').value = urlName;
 document.getElementById('join-server').value = currentSrv;
 document.getElementById('join-sub').textContent = `→ Server ${currentSrv} · :${SRV_PORT[currentSrv]}`;
 
-async function fetchRoomCode() {
-  try {
-    const res  = await fetch(`${location.protocol}//${location.hostname}:${location.port || 3000}/api/room-code`);
-    const data = await res.json();
-    if (data.code) document.getElementById('join-code').value = data.code;
-  } catch (_) {}
-}
-fetchRoomCode();
-
 /* ─── Auto-reconnect on refresh (sessionStorage is per-tab) ───── */
 const savedJoin = JSON.parse(sessionStorage.getItem(SESS_KEY) || 'null');
-if (savedJoin && savedJoin.name && savedJoin.code) {
+if (savedJoin && savedJoin.name) {
   userName   = savedJoin.name;
   currentSrv = savedJoin.srv || ORIGINAL_SRV[clientId];
   document.getElementById('join-name').value = userName;
-  document.getElementById('join-code').value = savedJoin.code;
   showChat();
-  connect(savedJoin.code);
+  connect();
 } else {
   document.getElementById('join-overlay').style.display = 'flex';
 }

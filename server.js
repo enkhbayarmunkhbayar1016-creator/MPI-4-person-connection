@@ -130,12 +130,6 @@ function attachServer(io, srv, otherIo) {
   io.on('connection', socket => {
     const { clientId, name, code } = socket.handshake.query;
 
-    if (code !== roomCode) {
-      socket.emit('auth-error', 'Буруу room code байна');
-      socket.disconnect();
-      return;
-    }
-
     if (!state[srv].online) {
       socket.emit('server-down', { redirect: srv === 'A' ? 'B' : 'A' });
       socket.disconnect();
