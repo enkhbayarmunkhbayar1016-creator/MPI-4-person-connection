@@ -37,8 +37,8 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: url('/muur.jpg') center/cover no-repeat;
-  opacity: 0.08;
+  background: url('/muur2.jpg') center/50% auto repeat;
+  opacity: 0.28;
   z-index: 0;
   pointer-events: none;
 }
