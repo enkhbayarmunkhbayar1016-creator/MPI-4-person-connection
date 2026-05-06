@@ -31,6 +31,25 @@ const CLIENT_GIFS  = {
   4: 'https://tenor.com/embed/13097109864427045880'
 };
 
+/* ─── Stickers & GIFs ─────────────────────────────────────────── */
+const STICKERS = [
+  '😊', '😂', '😍', '🤩', '😎', '🥳',
+  '😢', '😡', '🤔', '😱', '😴', '🤗',
+  '👍', '👎', '🙌', '🎉', '💯', '🔥',
+  '❤️', '💜', '💙', '💚', '🧡', '💛'
+];
+
+const GIFS = [
+  { name: 'Dance', url: 'https://tenor.com/embed/19131411' },
+  { name: 'Laugh', url: 'https://tenor.com/embed/4573615' },
+  { name: 'Clap', url: 'https://tenor.com/embed/10565906' },
+  { name: 'Wave', url: 'https://tenor.com/embed/5556127' },
+  { name: 'Thumbs Up', url: 'https://tenor.com/embed/19089405' },
+  { name: 'Party', url: 'https://tenor.com/embed/20069451' }
+];
+
+let currentStickerTab = 'sticker';
+
 let currentSrv = params.get('srv') || ORIGINAL_SRV[clientId];
 let userName   = '';
 let sock       = null;
@@ -100,7 +119,17 @@ function appendChat(cls, msg, text) {
     const isOwn = String(msg.clientId) === String(clientId);
     div.className = 'msg-bubble ' + (isOwn ? 'own' : 'other');
     const time = new Date(msg.time).toLocaleTimeString('mn-MN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    div.innerHTML = `<div class="msg-meta">${escHtml(msg.name || `Client ${msg.clientId}`)} · Server ${msg.fromServer} · ${time}</div>${escHtml(msg.text)}`;
+    const msgMeta = `<div class="msg-meta">${escHtml(msg.name || `Client ${msg.clientId}`)} · Server ${msg.fromServer} · ${time}</div>`;
+    
+    if (msg.type === 'sticker') {
+      div.className += ' sticker-msg';
+      div.innerHTML = msgMeta + `<div class="msg-sticker">${msg.text}</div>`;
+    } else if (msg.type === 'gif') {
+      div.className += ' gif-msg';
+      div.innerHTML = msgMeta + `<iframe src="${escHtml(msg.text)}" frameborder="0" allowfullscreen></iframe>`;
+    } else {
+      div.innerHTML = msgMeta + escHtml(msg.text);
+    }
   } else {
     div.textContent = text;
   }
@@ -114,8 +143,64 @@ function appendRaw(el) {
 }
 
 function enableInput(on) {
-  document.getElementById('input').disabled    = !on;
-  document.getElementById('send-btn').disabled = !on;
+  document.getElementById('input').disabled     = !on;
+  document.getElementById('send-btn').disabled  = !on;
+  document.getElementById('sticker-btn').disabled = !on;
+}
+
+/* ─── Sticker Panel ───────────────────────────────────────────── */
+function toggleStickerPanel() {
+  const panel = document.getElementById('sticker-panel');
+  if (panel.style.display === 'none') {
+    renderStickerPanel('sticker');
+    panel.style.display = 'flex';
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+function switchStickerTab(tab) {
+  currentStickerTab = tab;
+  document.querySelectorAll('.tab-sticker').forEach((el, i) => {
+    el.classList.toggle('active', (i === 0 && tab === 'sticker') || (i === 1 && tab === 'gif'));
+  });
+  renderStickerPanel(tab);
+}
+
+function renderStickerPanel(tab) {
+  const content = document.getElementById('sticker-content');
+  content.innerHTML = '';
+  
+  if (tab === 'sticker') {
+    STICKERS.forEach(sticker => {
+      const item = document.createElement('div');
+      item.className = 'sticker-item';
+      item.textContent = sticker;
+      item.onclick = () => sendSticker(sticker);
+      content.appendChild(item);
+    });
+  } else {
+    GIFS.forEach(gif => {
+      const item = document.createElement('div');
+      item.className = 'sticker-item';
+      item.textContent = '🎬';
+      item.title = gif.name;
+      item.onclick = () => sendGif(gif.url);
+      content.appendChild(item);
+    });
+  }
+}
+
+function sendSticker(sticker) {
+  if (!sock) return;
+  sock.emit('message', { text: sticker, type: 'sticker' });
+  toggleStickerPanel();
+}
+
+function sendGif(gifUrl) {
+  if (!sock) return;
+  sock.emit('message', { text: gifUrl, type: 'gif' });
+  toggleStickerPanel();
 }
 
 /* ─── Join flow ───────────────────────────────────────────────── */
@@ -245,6 +330,16 @@ document.getElementById('join-name').onkeydown = e => { if (e.key === 'Enter') h
 document.getElementById('conn-btn').onclick    = toggleConnect;
 document.getElementById('send-btn').onclick    = sendMsg;
 document.getElementById('input').onkeydown     = e => { if (e.key === 'Enter') sendMsg(); };
+document.getElementById('sticker-btn').onclick = toggleStickerPanel;
+
+/* ─── Close sticker panel when clicking outside ───────────────── */
+document.addEventListener('click', e => {
+  const panel = document.getElementById('sticker-panel');
+  const btn = document.getElementById('sticker-btn');
+  if (panel && panel.style.display === 'flex' && !panel.contains(e.target) && e.target !== btn) {
+    panel.style.display = 'none';
+  }
+});
 
 /* ─── Pre-fill name/server from URL ───────────────────────────── */
 if (urlName) document.getElementById('join-name').value = urlName;

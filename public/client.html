@@ -50,8 +50,17 @@
   </div>
   <div class="chat-box client-chat" id="chat"></div>
   <div class="msg-input-row">
+    <button class="sticker-btn" id="sticker-btn" disabled>😊</button>
     <input class="msg-input" id="input" placeholder="Мессеж бичнэ үү..." disabled />
     <button class="send-btn" id="send-btn" disabled>&#9658;</button>
+  </div>
+  <div class="sticker-panel" id="sticker-panel" style="display:none">
+    <div class="sticker-header">
+      <button class="tab-sticker active" onclick="switchStickerTab('sticker')">Stickers</button>
+      <button class="tab-sticker" onclick="switchStickerTab('gif')">GIFs</button>
+      <button class="close-panel-btn" onclick="toggleStickerPanel()">✕</button>
+    </div>
+    <div class="sticker-content" id="sticker-content"></div>
   </div>
 </div>
 

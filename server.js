@@ -131,7 +131,10 @@ function attachServer(ns, srv, otherNs) {
       const msg = {
         id: Date.now() + Math.random(),
         clientId, name: displayName,
-        text: data.text, fromServer: srv, time: Date.now()
+        text: data.text, 
+        type: data.type || 'text',
+        fromServer: srv, 
+        time: Date.now()
       };
       messages.push(msg);
       if (messages.length > 100) messages.shift();
