@@ -240,8 +240,7 @@ function sendMsg() {
 
 /* ─── Event listeners ─────────────────────────────────────────── */
 document.getElementById('join-btn').onclick    = handleJoin;
-document.getElementById('join-name').onkeydown = e => { if (e.key === 'Enter') document.getElementById('join-code').focus(); };
-document.getElementById('join-code').onkeydown = e => { if (e.key === 'Enter') handleJoin(); };
+document.getElementById('join-name').onkeydown = e => { if (e.key === 'Enter') handleJoin(); };
 document.getElementById('conn-btn').onclick    = toggleConnect;
 document.getElementById('send-btn').onclick    = sendMsg;
 document.getElementById('input').onkeydown     = e => { if (e.key === 'Enter') sendMsg(); };
