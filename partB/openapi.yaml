@@ -1,0 +1,220 @@
+openapi: 3.0.3
+info:
+  title: MPI Distributed Chat API
+  description: F.CSM311 BIE-DAALT-13 — Admin REST API for distributed chat system
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://mpi-4-person-connection.onrender.com
+    description: Production (Render)
+
+paths:
+  /api/login:
+    post:
+      summary: Нэвтрэх
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  example: admin123
+      responses:
+        '200':
+          description: Амжилттай нэвтэрсэн
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AdminLoginResponse'
+                  - $ref: '#/components/schemas/ClientLoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/register:
+    post:
+      summary: Шинэ хэрэглэгч бүртгэх
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [admin, client]
+                  default: client
+      responses:
+        '200':
+          description: Бүртгэл амжилттай
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/logout:
+    post:
+      summary: Гарах
+      tags: [Auth]
+      security:
+        - AdminToken: []
+      responses:
+        '200':
+          description: Гарсан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/admins:
+    get:
+      summary: Admin жагсаалт авах
+      tags: [Admins]
+      security:
+        - AdminToken: []
+      responses:
+        '200':
+          description: Admin нэрсийн жагсаалт
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example: [admin, superadmin]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Шинэ admin нэмэх
+      tags: [Admins]
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Admin нэмэгдсэн
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/admins/{username}:
+    delete:
+      summary: Admin устгах
+      tags: [Admins]
+      security:
+        - AdminToken: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Admin устгагдсан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Admin олдсонгүй
+
+components:
+  securitySchemes:
+    AdminToken:
+      type: apiKey
+      in: header
+      name: x-admin-token
+
+  schemas:
+    AdminLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin]
+
+    ClientLoginResponse:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [client]
+        username:
+          type: string
+        clientId:
+          type: integer
+
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        role:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: Нэвтрэх шаардлагатай
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Буруу хүсэлт
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
